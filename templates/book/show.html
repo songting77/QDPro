@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'book/css/book.css' %}">
+{% endblock %}
+{% block content %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div id="book">
+                <div class="row">
+                    <div class="col-md-4">
+                        <img src="{{ book.cover.url }}">
+                    </div>
+                    <div class="col-md-8">
+                        <div id="book_title">
+                            <h3>{{ book.name }}</h3> <h5>{{ book.author }} 著</h5>
+                        </div>
+                        <div id="tags">
+                            <ul>
+                                {% for tag in book.tags.all %}
+                                     <li class="tag">{{ tag.title }}</li>
+                                {% endfor %}
+                                <li class="cate">{{ book.category.parent.title }}</li>
+                                <li class="cate">{{ book.category.title }}</li>
+                                <div class="clearfix"></div>
+                            </ul>
+                        </div>
+                        <div>{{ book.content|safe }}</div>
+                        <div>
+                            <a class="btn btn-danger" onclick="qbuy('{{ book.id }}')" id="qbuyBtn">免费阅读</a>
+                            <a class="btn btn-success">好书收藏</a>
+                            <a class="btn btn-default">立即分享</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div id="week_rank">
+                <h4>周点击排行</h4>
+                <ul>
+                    {% for rank_book in rank_books %}
+                        <li><span class="no{% if forloop.counter <= 3 %}{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span><span class="title">{{ rank_book.name }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js %}
+<script>
+    var qbuying = false;  //是否正在抢购中
+    var query_id = 0;
+    function qbuy(book_id) {
+        if(qbuying){
+            return;
+        }
+
+        $.getJSON('/book/qbuy/'+book_id+"/", function (data) {
+             // 读取或解析 响应的数据(json格式)
+            alert(data.msg);
+            if (data.code == 301){
+                if(confirm('是否转到登录页面?')){
+                    window.open('/user/regist/',  target='_self');
+                }
+            }else if(data.code == 201){
+                $(this).text('抢购中...');
+                 qbuying = true;
+
+                 // 定时查询
+                 query_id = setInterval(function () {
+
+                     $.getJSON('/book/query_qbuy/'+book_id+"/", function (query_data) {
+                          if (query_data.code != 201){
+                              // 停止定时查询
+                              clearInterval(query_id);
+                              console.log('clearInterval()-->'+query_id)
+                              alert(query_data.msg);
+                          }
+
+                          if(query_data.code == 200){
+                              $('#qbuyBtn').text('抢购成功');
+                          }else if(query_data.code == 201){
+                              $('#qbuyBtn').text('抢购中...');
+                          }else{
+                              $('#qbuyBtn').text('抢购失败');
+                          }
+
+
+
+                     });
+                 },1000)
+            }
+
+        });
+    }
+
+
+
+</script>
+{% endblock %}
