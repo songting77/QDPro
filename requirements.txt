@@ -123,7 +123,7 @@ raven==6.9.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.0.0
-Scrapy==1.5.1
+Scrapy==2.6.2
 scrapy-redis==0.6.8
 selenium==3.14.0
 self==0.0.27
